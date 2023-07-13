@@ -1,2 +1,2 @@
-# difficult-words-in-a-movie
+# About
 It's a simple tool for gathering a collection of vocabularies from a subtitle file
