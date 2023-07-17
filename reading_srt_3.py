@@ -38,7 +38,5 @@ try:
     for word in sorted_words:
         print(word)
 
-# ...
-
 except Exception as e:
     print("An error occurred:", str(e))
