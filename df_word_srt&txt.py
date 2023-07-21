@@ -23,7 +23,9 @@ def find_unsimilar_words(srt_file_l, lc_file_l):
         # Find the unsimilar words (not present in the Longman Communication 3000 file)
         unsimilar = []
         for word in clean_words:
-            if word.lower() not in lc_words:
+            if word.lower()  in lc_words:
+                pass
+            else:
                 unsimilar.append(word)
 
         return unsimilar
