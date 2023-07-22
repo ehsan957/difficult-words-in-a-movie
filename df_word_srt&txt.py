@@ -26,7 +26,7 @@ def find_unsimilar_words(srt_file_l, lc_file_l):
             if word.lower()  in lc_words:
                 pass
             else:
-                unsimilar.append(word)
+                unsimilar.append(word.lower())
 
         return unsimilar
     except FileNotFoundError:
@@ -44,5 +44,5 @@ unsimilar_words = find_unsimilar_words(srt_file_l, lc_file_l)
 
 # Write the unsimilar words to the 'new_txt_file.txt' file
 with open('new_txt_file.txt', 'w') as new_file:
-    for word in set(unsimilar_words):  # Use set to remove duplicates
+    for word in sorted(set(unsimilar_words)):  # Use set to remove duplicates
         new_file.write(word + '\n')
