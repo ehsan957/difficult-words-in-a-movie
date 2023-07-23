@@ -20,7 +20,7 @@ def find_unsimilar_words(srt_file_l, lc_file_l):
         # Split the content into words
         lc_words = lc_content.split()
 
-        # Find the unsimilar words (not present in the Longman Communication 3000 file)
+        # Find the unsimilar words (not present in the Longman Communication 3000 file)/ we use this simple word list
         unsimilar = []
         for word in clean_words:
             if word.lower()  in lc_words:
@@ -38,7 +38,7 @@ def find_unsimilar_words(srt_file_l, lc_file_l):
 # Get the file paths from user input (You can replace these paths with your file paths)
 srt_file_l = input('please enter srt file path: ')
 lc_file_l = input('please enter longman communication 3000 file path: ')
-
+# for testing code we use these links(https://github.com/jnoodle/English-Vocabulary-Word-List/blob/master/Longman%20Communication%203000.txt)
 # Call the function and retrieve the results
 unsimilar_words = find_unsimilar_words(srt_file_l, lc_file_l)
 
