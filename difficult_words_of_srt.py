@@ -25,8 +25,11 @@ def get_word_meaning_from_longman(word):
             soup = BeautifulSoup(response.text, 'html.parser')
 
             # Find the element that contains the meaning
-            meaning_element = soup.find('span', {'class': 'Sense'})
-            
+            meaning_element = soup.find('span', {'class': 'DEF'})
+            not_polite = soup.find('span', {'class': 'REGISTERLAB'})
+            if not_polite:
+                if not_polite.get_text().strip()=="not polite" or not_polite.get_text().strip()=="taboo":
+                    return None
             if meaning_element:
                 # Get the text content of the meaning element
                 meaning = meaning_element.get_text()
