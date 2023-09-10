@@ -11,7 +11,7 @@ def convert_to_past_tense(verb):
     return past_tense_verb
 
 # Define a function to get the meaning of a word from the Longman dictionary website
-def get_word_meaning_from_longman(word):
+def get_word_meaning_from_longman(word, again=0):
     try:
         # Define the URL for the Longman page
         url = f'https://www.ldoceonline.com/dictionary/{word}'
@@ -22,14 +22,28 @@ def get_word_meaning_from_longman(word):
         response = requests.get(url, headers=headers)
 
         if response.status_code == 200:
+            print(word)
             soup = BeautifulSoup(response.text, 'html.parser')
 
             # Find the element that contains the meaning
             meaning_element = soup.find('span', {'class': 'DEF'})
             not_polite = soup.find('span', {'class': 'REGISTERLAB'})
+            upperWord = soup.find('span', {'class': 'HYPHENATION'})
+            activ = soup.find('span', {'class': 'REFHWD'})
+            freq = soup.find('span', {'class': 'FREQ'})
+            if freq:
+                return None
+            
+            if upperWord:
+                if upperWord.get_text().strip()!=upperWord.get_text().lower().strip():
+                    return None
             if not_polite:
                 if not_polite.get_text().strip()=="not polite" or not_polite.get_text().strip()=="taboo":
                     return None
+            if activ:
+                if again == 1:
+                    return None
+                return get_word_meaning_from_longman(activ.get_text().lower().replace(" ","-"),1)
             if meaning_element:
                 # Get the text content of the meaning element
                 meaning = meaning_element.get_text()
