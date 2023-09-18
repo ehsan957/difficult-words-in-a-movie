@@ -1,17 +1,39 @@
 import requests
 from bs4 import BeautifulSoup
-from nltk.stem import WordNetLemmatizer
 import csv
 import time
 
 class WordMeaningFetcher:
     def __init__(self):
-        self.lemmatizer = WordNetLemmatizer()
         self.lc_file_path = "Longman Communication 3000.txt"
 
-    def convert_to_past_tense(self, verb):
-        past_tense_verb = self.lemmatizer.lemmatize(verb, 'v')
-        return past_tense_verb
+    def get_base_form_from_website(self, word):
+        try:
+            url = f'https://www.ldoceonline.com/dictionary/{word}'
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+            }
+            response = requests.get(url, headers=headers)
+
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                base_form_element = soup.find('span', {'class': 'BASE'})
+                if base_form_element:
+                    base_form = base_form_element.get_text()
+                    return base_form.strip()
+                past_tense_element = soup.find('span', {'class': 'PAST'})
+                if past_tense_element:
+                    past_tense = past_tense_element.get_text()
+                    return past_tense.strip()
+                else:
+                    return None
+            else:
+                print(f"Failed to fetch data from Longman website. HTTP status code: {response.status_code}")
+                return None
+
+        except requests.exceptions.RequestException as e:
+            print("Error fetching data from Longman website:", str(e))
+            return None
 
     def get_word_meaning_from_longman(self, word, again=0):
         try:
@@ -28,11 +50,17 @@ class WordMeaningFetcher:
                 upperWord = soup.find('span', {'class': 'HYPHENATION'})
                 activ = soup.find('span', {'class': 'REFHWD'})
                 freq = soup.find('span', {'class': 'FREQ'})
+                present = soup.find('span', {'class' :'verb_tense'})
 
-                if freq or (upperWord and upperWord.get_text().strip() != upperWord.get_text().lower().strip()) \
-                        or (not_polite and (not_polite.get_text().strip() == "not polite" or not_polite.get_text().strip() == "taboo")):
+                if freq:
                     return None
-
+            
+                if upperWord:
+                    if upperWord.get_text().strip()!=upperWord.get_text().lower().strip():
+                        return None
+                if not_polite:
+                    if not_polite.get_text().strip()=="not polite" or not_polite.get_text().strip()=="taboo":
+                        return None
                 if activ:
                     if again == 1:
                         return None
@@ -41,8 +69,12 @@ class WordMeaningFetcher:
                 if meaning_element:
                     meaning = meaning_element.get_text()
                     return meaning.strip()
+                if present:
+                    return None
                 else:
                     return None
+            elif response.status_code == 404:
+                return None
             else:
                 print(f"Failed to fetch data from Longman website. HTTP status code: {response.status_code}")
                 return None
@@ -50,10 +82,10 @@ class WordMeaningFetcher:
         except requests.exceptions.RequestException as e:
             print("Error fetching data from Longman website:", str(e))
             return None
-
-    def fetch_longman_words(self):
+    time.sleep(2)
+    def fetch_longman_words(self, word):
         try:
-            url = 'https://www.ldoceonline.com/dictionary/'
+            url = f'https://www.ldoceonline.com/dictionary/{word}'
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
             }
@@ -77,7 +109,7 @@ class WordMeaningFetcher:
 
     def find_unsimilar_words(self, srt_file_path, lc_file_path=None):
         if lc_file_path is None:
-            lc_file_path = self.lc_file_path  # Use the default path
+            lc_file_path = self.lc_file_path 
         try:
             with open(srt_file_path, 'r') as srt_file:
                 srt_content = srt_file.read()
@@ -98,16 +130,12 @@ class WordMeaningFetcher:
                 elif len(word) == 1:
                     pass
                 else:
-                    if self.convert_to_past_tense(word.lower()) not in lc_words:
+                    if (word.lower()) not in lc_words:
                         unsimilar.append(word.lower())
 
-            for word in unsimilar:
-                if word not in lc_words:
-                    pass
-                else:
-                    difficult_words.append(word)
+            difficult_words = [word for word in unsimilar if word not in lc_words]
 
-            return difficult_words, unsimilar
+            return difficult_words
 
         except FileNotFoundError:
             print("File not found. Please check the file paths.")
@@ -115,13 +143,11 @@ class WordMeaningFetcher:
             print("Error reading the file. Please ensure the files are accessible.")
 
     def fetch_and_store_meanings(self, srt_file_path, csv_file_path=None):
-        unsimilar, difficult_words = self.find_unsimilar_words(srt_file_path)
+        difficult_words = self.find_unsimilar_words(srt_file_path)
         key_words = []
 
         for word in sorted(set(difficult_words)):
-            verb = self.convert_to_past_tense(word)
-            if verb:
-                key_words.append(verb)
+            key_words.append(word)
 
         unsimilar_words_with_meaning_dict = {}
 
@@ -140,9 +166,11 @@ class WordMeaningFetcher:
             for word, meaning in unsimilar_words_with_meaning_dict.items():
                 csv_writer.writerow([word, meaning])
 
+            for word, meaning in unsimilar_words_with_meaning_dict.items():
+                print(word, meaning)
+
 if __name__ == "__main__":
     meaning_fetcher = WordMeaningFetcher()
-    srt_file_path = input("Please input SRT file path: ")
-    # Prompt the user for the CSV file path
-    csv_file_path = input("Please input CSV file path: ")
+    srt_file_path = input("please enter srt file path...")
+    csv_file_path = input("please enter csv file path...")
     meaning_fetcher.fetch_and_store_meanings(srt_file_path, csv_file_path)
